@@ -1,0 +1,6 @@
+parts/*
+.git/
+*.pyc
+env/*
+.ipynb_checkpoints/*
+webapp/data

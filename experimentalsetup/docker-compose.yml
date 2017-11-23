@@ -1,0 +1,41 @@
+zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=32181
+      - ZOOKEEPER_TICK_TIME=2000
+    ports:
+      - 32181:32181
+      - 2181:2181
+      - 2888:2888
+      - 3888:3888
+kafka:
+    image: confluentinc/cp-kafka:latest
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:32181
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:29092
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_MESSAGE_MAX.BYTES=410000000
+#    socket.receive.buffer.bytes = 102400
+#	socket.request.max.bytes = 104857600
+#	socket.send.buffer.bytes = 102400
+    hostname: "localhost"
+    ports:
+      - 9092:9092
+      - 29092:29092
+    links:
+       - zookeeper
+#uploader:
+#  build: .
+#  volumes:
+#        - .:/app/
+#        - ./parts/:/data/
+#  stdin_open: true
+#  tty: true
+#  links:
+#     - kafka
+#     - zookeeper
+#  ports:
+#    - 8080:8080
+#
+#
