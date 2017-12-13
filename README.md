@@ -1,4 +1,4 @@
-# b2kafka
+# Replicating research data repository with help of Apache Kafka
 Research data repository stored and replicated with kafka
 
 
