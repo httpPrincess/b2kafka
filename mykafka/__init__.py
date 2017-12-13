@@ -13,8 +13,8 @@ chunk_size = MAX_SIZE
 
 def get_address():
     import os
-    server = os.getenv('KAFKA_PORT_129092_TCP_ADDR', 'localhost')
-    port = os.getenv('KAFKA_PORT_219092_TCP_PORT', '29092')
+    server = os.getenv('KAFKA_PORT_29092_TCP_ADDR', 'localhost')
+    port = os.getenv('KAFKA_PORT_29092_TCP_PORT', '29092')
     return server + ':' + port
 
 
@@ -24,10 +24,11 @@ def get_producer():
                          buffer_memory=10 * 33554432, max_block_ms=10 * 60000)
 
 
-def get_consumer():
+def get_consumer(client_id="1", group_id=None):
     return KafkaConsumer(TOPIC, auto_offset_reset='earliest',
                          bootstrap_servers=get_address(),
-                         consumer_timeout_ms=100000)
+                         consumer_timeout_ms=100000,
+                         client_id=client_id, group_id=group_id)
     # value_deserializer=lambda m: m[:500])
 
 

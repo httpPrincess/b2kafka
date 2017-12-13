@@ -25,8 +25,12 @@ def get_single_object(ids):
     return conn.execute('SELECT * FROM dos WHERE id==?', [ids, ]).fetchone()
 
 
-def add_object_to_repo(do):
-    conn = _get_connection()
+def add_object_to_repo(do, connection=None):
+    if connection:
+        conn = connection
+    else:
+        conn = _get_connection()
+
     conn.execute('INSERT INTO dos VALUES (?, ?)', (do['id'], do['created']))
     conn.commit()
 

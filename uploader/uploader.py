@@ -4,23 +4,24 @@ import json
 import os
 import datetime
 import time
-from tqdm import tqdm
-from mykafka import _publish,  MAX_SIZE, chunk_size
 import sys
 import logging
+from tqdm import tqdm
+from mykafka import _publish, MAX_SIZE, chunk_size
+
 
 logging.basicConfig(filename='uploader.log', level=logging.INFO)
 
 
-def upload_to_kafka(oid, do, files):
+def upload_to_kafka(oid, data_object, files):
     files = list(map(lambda x: os.path.join(oid, x), files))
-    do['files'] = files
-    _publish(bytes('do:{}'.format(oid), 'ascii'), json.dumps(do).encode('ascii'))
+    data_object['files'] = files
+    _publish(bytes('do:{}'.format(oid), 'ascii'), json.dumps(data_object).encode('ascii'))
 
-    for f in files:
-        fsize = os.stat(f).st_size
-        with open(f, 'rb') as file:
-            fname = f.replace('\\', '')
+    for current_file in files:
+        fsize = os.stat(current_file).st_size
+        with open(current_file, 'rb') as file:
+            fname = current_file.replace('\\', '')
             fname = fname.replace('^J', '')
             fname = fname.replace('\n', '')
             fname = fname.replace('?', '')
@@ -42,18 +43,18 @@ def get_files(oid):
     files = list()
     try:
         files = os.listdir(oid)
-    except Exception:
+    except FileNotFoundError:
         pass
 
     return files
 
 
-def process_list(hits, upload):
+def process_list(hit_list, upload):
     i = 0
     start = time.time()
     total_files = 0
 
-    for do in tqdm(hits):
+    for do in tqdm(hit_list):
         oid = do['id']
         if 'links' in do:
             do.pop('links')

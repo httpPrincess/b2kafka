@@ -1,10 +1,10 @@
+import os
 import json
 import requests
-import os
 
 base_url = os.getenv('B2SHARE_URL', 'https://b2share.eudat.eu/api/records')
 
-creds = {
+credentials = {
     'access_token': os.getenv('B2SHARE_TOKEN', None)
 }
 # 100 is the maximum value (higher values will be truncated at the server)
@@ -13,7 +13,7 @@ PAGE_SIZE = 100
 
 def retrieve_items(page=1):
     params = dict()
-    params.update(creds)
+    params.update(credentials)
     pagination = {'size': PAGE_SIZE, 'page': page}
     params.update(pagination)
 
@@ -35,13 +35,6 @@ def retrieve_items(page=1):
 
     return content
 
-
-def process_flist():
-    for rec in finfo['contents']:
-        furl = rec['links']['self']
-        fname = rec['key']
-
-
 def extract_file_lists(hits):
     for record in hits:
         if not 'files' in record['links']:
@@ -55,14 +48,14 @@ def extract_file_lists(hits):
 
         finfo = finfo.json()
 
-        if not 'contents' in finfo:
+        if 'contents' not in finfo:
             print('No contents here')
             continue
 
         yield record['id'], finfo['contents']
 
 
-def procesor():
+def processor():
     with open('out.json', 'r') as f:
         hits = json.load(f)
 
@@ -75,13 +68,13 @@ def procesor():
 
 if __name__ == "__main__":
     if 'B2SHARE_TOKEN' not in os.environ:
-        print('To retrieve remote records, provide access token in ' \
-              'B2SHARE_TOKEN environment ' \
+        print('To retrieve remote records, provide access token in '
+              'B2SHARE_TOKEN environment '
               'variable')
         exit(-1)
 
     items = retrieve_items(page=1)
-    fname = 'out.json'
-    print('Retrieved %d writing to %s' % (len(items), fname))
-    with open(fname, 'w+') as f:
-        json.dump(items, f)
+    file_name = 'out.json'
+    print('Retrieved %d writing to %s' % (len(items), file_name))
+    with open(file_name, 'w+') as json_file:
+        json.dump(items, json_file)

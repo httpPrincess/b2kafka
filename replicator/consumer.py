@@ -1,12 +1,12 @@
 # consumer
 import json
 import time
-from mykafka import get_consumer
 import sqlite3
 import os
 import re
-from tqdm import tqdm
 import logging
+from tqdm import tqdm
+from mykafka import get_consumer
 
 logging.basicConfig(filename='consumer.log', level=logging.INFO)
 
@@ -17,43 +17,38 @@ def _get_connection():
     return conn
 
 
-def add_object_to_repo(do, conn):
-    conn.execute('INSERT INTO dos VALUES (?, ?)', (do['id'], do['created']))
+def add_object_to_repo(data_object, conn):
+    conn.execute('INSERT INTO dos VALUES (?, ?)', (data_object['id'], data_object['created']))
     conn.commit()
 
 
 def setup_repo():
     try:
         os.remove('dos.db')
-    except:
+    except FileNotFoundError:
         pass
 
     conn = sqlite3.connect('dos.db')
 
-    conn.execute('''CREATE TABLE IF NOT EXISTS dos (id text, creted text)''')
+    conn.execute('''CREATE TABLE IF NOT EXISTS dos (id text, created text)''')
     conn.commit()
     conn.close()
 
 
-def start_replication():
-    objects = dict()
+def start_replication(consumer, connection):
     print('Starting replication')
-    setup_repo()
-    c = get_consumer()
-    connection = _get_connection()
     i, j = 0, 0
 
     start = time.time()
-    with tqdm(total=538) as bar:
-        for msg in c:
+    with tqdm(total=538) as progress_bar:
+        for msg in consumer:
             i += 1
             if msg.key.startswith(b'do:'):
                 j += 1
-                logging.info('Got do {} --> {}'.format(msg.key, msg.value))
+                logging.info('Got do %s --> %s', msg.key, msg.value)
                 do = json.loads(msg.value.decode('ascii'))
-                objects[do['id']] = do
-                add_object_to_repo(do=do, conn=connection)
-                bar.update()
+                add_object_to_repo(data_object=do, conn=connection)
+                progress_bar.update()
             if msg.key.startswith(b'file:'):
                 fname = msg.key.decode('ascii')[5:]
                 dirname = fname.split('/')[0]
@@ -63,23 +58,19 @@ def start_replication():
                 if gg is not None:
                     fname = fname[:gg.start()]
 
-                logging.info('Got file {} --> {}'.format(fname, msg.value[:20]))
+                logging.info('Got file %s --> %s', fname, msg.value[:20])
                 with open(fname, 'ab+') as f:
                     f.write(msg.value)
 
     end = time.time()
 
-    msg = 'Replication finished: Got {} messages and {} objects'.format(i, j)
-    print(msg)
-    logging.info(msg)
-
-    msg = 'Elapsed time {0:.2f}'.format(end - start)
-    print(msg)
-    logging.info(msg)
-
-    with open('objects.json', 'w+') as f:
-        json.dump(objects, f)
+    logging.info('Replication finished: Got %s messages and %s objects', i, j)
+    logging.info('Elapsed time %.3f', (end - start))
 
 
 if __name__ == "__main__":
-    start_replication()
+    setup_repo()
+    c = get_consumer()
+    connection = _get_connection()
+    start_replication(c, connection)
+    connection.close()

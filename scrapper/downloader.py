@@ -1,8 +1,8 @@
-import requests
 from multiprocessing import Pool
 import logging
 import shutil
 import os
+import requests
 
 logging.basicConfig(filename='downloading.log', level=logging.DEBUG)
 
@@ -15,10 +15,10 @@ def download_file(args, **kwargs):
     os.makedirs(pid, exist_ok=True)
     r = requests.get(url, stream=True)
     if r.status_code != 200:
-        logging.warning('Problem processing: {}/{} from {}'.format(pid, fname, url))
+        logging.warning('Problem processing: %s/%s from %s', pid, fname, url)
     with open(os.path.join(pid, fname), 'wb') as f:
         shutil.copyfileobj(r.raw, f)
-        logging.info('Downloading completed {}'.format(url))
+        logging.info('Downloading completed %s', url)
 
 
 def get_items():
